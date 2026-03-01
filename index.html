@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>XRAWS | CYBER EMERALD 2026</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://upload-widget.cloudinary.com/global/all.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@900&family=Cairo:wght@400;700;900&display=swap');
+        :root { --neon: #00ff88; --gold: #ffd700; }
+        
+        body { margin: 0; background: #000; color: #fff; font-family: 'Cairo', sans-serif; overflow-x: hidden; }
+
+        /* تأثير المسح الضوئي */
+        .scan-line { position: absolute; top: 0; left: 0; width: 100%; height: 2px; background: var(--neon); box-shadow: 0 0 15px var(--neon); z-index: 5; animation: scan 3s linear infinite; pointer-events: none; opacity: 0.5; }
+        @keyframes scan { 0% { top: 0; } 100% { top: 100%; } }
+
+        header { height: 80px; background: rgba(0,0,0,0.9); backdrop-filter: blur(20px); border-bottom: 2px solid var(--neon); display: flex; align-items: center; justify-content: space-between; padding: 0 25px; position: fixed; top: 0; width: 100%; z-index: 1000; }
+        
+        .logo { font-family: 'Orbitron'; font-weight: 900; font-size: 28px; color: var(--neon); text-shadow: 0 0 15px var(--neon); cursor: pointer; }
+
+        .feed { padding-top: 100px; display: flex; flex-direction: column; align-items: center; gap: 50px; padding-bottom: 120px; }
+        
+        .v-card { width: 92%; max-width: 480px; border-radius: 30px; background: #050505; border: 1px solid #111; overflow: hidden; position: relative; transition: 0.4s; }
+        .v-card:hover { border-color: var(--neon); transform: scale(1.01); }
+
+        /* تمييز التريند */
+        .trending { border: 2px solid var(--gold) !important; box-shadow: 0 0 20px rgba(255, 215, 0, 0.2); }
+        .trend-tag { position: absolute; top: 15px; right: 15px; background: var(--gold); color: #000; font-family: 'Orbitron'; font-size: 10px; padding: 2px 10px; border-radius: 5px; font-weight: 900; z-index: 10; animation: bounce 2s infinite; }
+        @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+
+        video { width: 100%; aspect-ratio: 9/16; object-fit: cover; background: #000; cursor: pointer; }
+
+        .btn-side { position: absolute; left: 20px; bottom: 120px; display: flex; flex-direction: column; gap: 15px; z-index: 10; }
+        .glass-icon { width: 45px; height: 45px; background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); border-radius: 12px; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(255,255,255,0.05); cursor: pointer; transition: 0.3s; }
+        .glass-icon:hover { background: var(--neon); color: #000; }
+
+        .comment-box { padding: 15px; background: #080808; border-top: 1px solid #111; }
+        .c-item { font-size: 12px; color: #ccc; margin-bottom: 5px; padding-right: 10px; border-right: 2px solid var(--neon); }
+        .c-input { width: 100%; background: #111; border: 1px solid #222; border-radius: 10px; padding: 10px; color: #fff; font-size: 12px; margin-top: 10px; outline: none; }
+        .c-input:focus { border-color: var(--neon); }
+
+        .up-btn { position: fixed; bottom: 30px; left: 30px; width: 65px; height: 65px; background: var(--neon); color: #000; border-radius: 20px; display: flex; align-items: center; justify-content: center; font-size: 26px; cursor: pointer; z-index: 2000; box-shadow: 0 0 20px var(--neon); transition: 0.3s; }
+        .up-btn:hover { border-radius: 50%; transform: rotate(90deg); }
+
+        footer { padding: 50px 20px; text-align: center; border-top: 1px solid #111; }
+        .energy-bar { width: 200px; height: 4px; background: #111; margin: 15px auto; border-radius: 2px; overflow: hidden; }
+        .energy-fill { width: 98%; height: 100%; background: var(--neon); animation: fill 3s ease-out; }
+        @keyframes fill { from { width: 0; } to { width: 98%; } }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo italic" id="adm-key">XRAWS</div>
+        <div class="flex gap-4">
+            <i class="fas fa-bolt text-yellow-500"></i>
+            <i class="fas fa-search text-gray-600" onclick="ad()"></i>
+        </div>
+    </header>
+
+    <main class="feed" id="feed-container"></main>
+
+    <footer>
+        <div class="logo text-xl mb-2">XRAWS</div>
+        <div class="energy-bar"><div class="energy-fill"></div></div>
+        <div class="text-[10px] text-gray-500 tracking-[5px] uppercase">Production Year 2026 | Optimized System</div>
+    </footer>
+
+    <button class="up-btn" id="upload-trigger"><i class="fas fa-plus"></i></button>
+
+    <script>
+        const CFG = {
+            db: "https://soko-7d03e-default-rtdb.firebaseio.com/",
+            cl: "dfscughol",
+            pr: "update_vk",
+            ads: ["https://www.effectivegatecpm.com/bxwxuk2f39?key=566216691dc8b76a740840e94f68f44c", "https://www.effectivegatecpm.com/k60w64w4gk?key=564f3d8cc4ac85949f218179b742495e"]
+        };
+
+        firebase.initializeApp({ databaseURL: CFG.db });
+        const db = firebase.database();
+        let adI = 0;
+
+        function ad() { window.open(CFG.ads[adI], '_blank'); adI = (adI + 1) % 2; }
+
+        const w = cloudinary.createUploadWidget({ cloudName: CFG.cl, uploadPreset: CFG.pr, resourceType: 'video' }, (e, r) => {
+            if (r.event === "success") db.ref('x_cyber/').push({ u: r.info.secure_url, l: 0, t: Date.now() });
+        });
+
+        document.getElementById("upload-trigger").onclick = () => w.open();
+
+        db.ref('x_cyber').on('value', (s) => {
+            const container = document.getElementById('feed-container');
+            const data = s.val();
+            container.innerHTML = '';
+            if(!data) return;
+
+            Object.keys(data).reverse().forEach(id => {
+                const v = data[id];
+                const isTrending = v.l >= 10;
+                container.innerHTML += `
+                    <div class="v-card ${isTrending ? 'trending' : ''}">
+                        ${isTrending ? '<div class="trend-tag">HOT TREND</div>' : ''}
+                        <div class="scan-line"></div>
+                        <video loop playsinline src="${v.u}" controls></video>
+                        
+                        <div class="btn-side">
+                            <div class="glass-icon" onclick="like('${id}')"><i class="fas fa-heart text-red-500"></i></div>
+                            <span class="text-[10px] text-center mt-[-10px] mb-2 font-bold">${v.l || 0}</span>
+                            <div class="glass-icon" onclick="ad(); window.open('${v.u}','_blank')"><i class="fas fa-download"></i></div>
+                            <div class="glass-icon" onclick="ad()"><i class="fas fa-share-nodes"></i></div>
+                        </div>
+
+                        <div class="comment-box">
+                            <div id="c-list-${id}"></div>
+                            <input type="text" class="c-input" placeholder="Type a message..." onkeydown="if(event.key==='Enter') addC('${id}', this.value); if(event.key==='Enter') this.value=''">
+                        </div>
+                    </div>`;
+                loadC(id);
+            });
+        });
+
+        function addC(id, t) { if(!t.trim()) return; ad(); db.ref(`x_cyber/${id}/coms`).push({m: t}); }
+        function loadC(id) {
+            db.ref(`x_cyber/${id}/coms`).on('value', s => {
+                const l = document.getElementById(`c-list-${id}`);
+                const d = s.val(); l.innerHTML = '';
+                if(d) Object.values(d).slice(-3).forEach(c => { l.innerHTML += `<div class="c-item">${c.m}</div>`; });
+            });
+        }
+        function like(id) { ad(); db.ref(`x_cyber/${id}/l`).transaction(x => (x || 0) + 1); }
+
+        // لوحة الإدارة (ضغط مطول 3 ثوانٍ)
+        let hold;
+        document.getElementById('adm-key').onmousedown = () => hold = setTimeout(() => {
+            const p = prompt("Admin Pass:");
+            if(p === "2026") {
+                const id = prompt("Video ID to delete:");
+                db.ref(`x_cyber/${id}`).remove();
+            }
+        }, 3000);
+        document.getElementById('adm-key').onmouseup = () => clearTimeout(hold);
+    </script>
+</body>
+</html>
